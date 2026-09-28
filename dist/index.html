@@ -1,0 +1,1862 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#121b39">
+  <meta name="description" content="Practice memorising exact passages with first-letter cues and progressive recall.">
+  <title>FLOW — First Letter Practice</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23121b39'/%3E%3Cpath d='M17 16h31v9H27v8h18v9H27v16H17z' fill='%23ffd45a'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --ink: #121b39;
+      --ink-soft: #47506c;
+      --paper: #f7f8fc;
+      --card: #ffffff;
+      --line: #d9deeb;
+      --accent: #ffd45a;
+      --accent-strong: #f4b82f;
+      --blue: #3156d9;
+      --blue-soft: #eef2ff;
+      --good: #147a52;
+      --bad: #bf3b46;
+      --shadow: 0 18px 50px rgba(18, 27, 57, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(255, 212, 90, .33), transparent 25rem),
+        linear-gradient(180deg, #f3f5fb 0, var(--paper) 28rem);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    button, textarea, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 54px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 26px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 13px;
+      color: var(--accent);
+      background: var(--ink);
+      font-weight: 900;
+      font-size: 1.45rem;
+      box-shadow: 0 7px 18px rgba(18, 27, 57, .18);
+    }
+    .brand-copy strong { display: block; font-size: 1.06rem; letter-spacing: .08em; }
+    .brand-copy span { color: var(--ink-soft); font-size: .88rem; }
+
+    .header-tools { display: flex; align-items: center; gap: 12px; }
+    .saved {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--ink-soft);
+      font-size: .88rem;
+    }
+    .saved::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--good);
+    }
+    .settings-button {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 8px 13px;
+      color: var(--ink);
+      background: rgba(255,255,255,.88);
+      font-weight: 800;
+    }
+    .settings-button:hover { border-color: #b9c1d6; background: white; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(300px, .83fr) minmax(430px, 1.35fr);
+      align-items: start;
+      gap: 22px;
+      transition: grid-template-columns .25s ease;
+    }
+
+    body.session-active .workspace { grid-template-columns: minmax(0, 1fr); }
+    body.session-active .setup-panel { display: none; }
+    body.session-active .practice-panel { width: min(900px, 100%); margin-inline: auto; }
+
+    .panel {
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(217, 222, 235, .9);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 19px 21px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-head h1, .panel-head h2 { margin: 0; font-size: 1.02rem; }
+    .panel-actions { display: flex; align-items: center; gap: 8px; }
+    .header-action {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 7px 11px;
+      color: var(--ink-soft);
+      background: white;
+      font-size: .8rem;
+      font-weight: 800;
+    }
+    .header-action:hover { color: var(--ink); border-color: #b9c1d6; }
+    .step {
+      color: var(--blue);
+      background: var(--blue-soft);
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    .editor-body { padding: 20px; }
+    label { display: block; color: var(--ink-soft); font-size: .84rem; font-weight: 700; margin-bottom: 7px; }
+    .title-input, textarea {
+      width: 100%;
+      color: var(--ink);
+      background: #fbfcff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .title-input { height: 44px; padding: 0 13px; margin-bottom: 16px; }
+    textarea { min-height: 224px; resize: vertical; padding: 13px; line-height: 1.65; }
+    .title-input:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(49, 86, 217, .12);
+    }
+    .hint { color: var(--ink-soft); font-size: .8rem; margin: 8px 1px 17px; }
+    .primary {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: white;
+      background: var(--ink);
+      font-weight: 800;
+      box-shadow: 0 6px 14px rgba(18,27,57,.16);
+    }
+    .primary:hover { background: #1d2a55; }
+
+    .mini-rule {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 17px;
+      border-top: 1px solid var(--line);
+      color: var(--ink-soft);
+      font-size: .82rem;
+    }
+    .mini-rule b { color: var(--ink); }
+    .keycap {
+      align-self: start;
+      border: 1px solid var(--line);
+      border-bottom-width: 3px;
+      border-radius: 7px;
+      padding: 1px 7px;
+      color: var(--ink);
+      background: white;
+      font-size: .76rem;
+      font-weight: 800;
+    }
+
+    .practice-top { padding: 20px 21px 0; }
+    .understand-panel {
+      padding: 17px;
+      border: 1px solid #cfd8f7;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #f2f5ff, #fafbff);
+    }
+    .understand-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 13px;
+    }
+    .understand-head h3 { margin: 0 0 3px; font-size: 1rem; }
+    .understand-head p { margin: 0; color: var(--ink-soft); font-size: .82rem; }
+    .ai-badge {
+      flex: 0 0 auto;
+      padding: 4px 9px;
+      border-radius: 999px;
+      color: #2947b6;
+      background: #e1e8ff;
+      font-size: .74rem;
+      font-weight: 850;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .key-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .key-row input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #c8d2f2;
+      border-radius: 10px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: white;
+      outline: none;
+    }
+    .key-row input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(49,86,217,.12); }
+    .key-control, .ai-action {
+      min-height: 42px;
+      border-radius: 10px;
+      padding: 0 13px;
+      font-weight: 800;
+    }
+    .key-control { border: 1px solid #c8d2f2; color: var(--ink-soft); background: white; }
+    .ai-action { border: 0; color: white; background: var(--blue); }
+    .ai-action:disabled { opacity: .65; cursor: wait; }
+    .key-note {
+      margin: 9px 0 0;
+      color: var(--ink-soft);
+      font-size: .76rem;
+      line-height: 1.45;
+    }
+    .key-note strong { color: var(--ink); }
+    .ai-status { min-height: 20px; margin: 8px 0 0; color: #2947b6; font-size: .8rem; font-weight: 750; }
+    .ai-status.error { color: var(--bad); }
+    .ai-result {
+      margin-top: 13px;
+      padding: 16px;
+      border: 1px solid #dbe1f2;
+      border-radius: 12px;
+      background: white;
+    }
+    .ai-result[hidden] { display: none; }
+    .ai-result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+    .ai-result h4 { margin: 0; font-family: Georgia, serif; font-size: 1.1rem; }
+    .ai-output { margin: 0; color: #27304d; white-space: pre-wrap; line-height: 1.65; font-size: .92rem; }
+    .dialog-shell {
+      width: min(620px, calc(100% - 28px));
+      max-height: min(82vh, 760px);
+      margin: auto;
+      padding: 0;
+      color: var(--ink);
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 28px 90px rgba(18,27,57,.28);
+      overflow: auto;
+    }
+    .dialog-shell::backdrop { background: rgba(18,27,57,.52); backdrop-filter: blur(4px); }
+    .dialog-head {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 20px 21px;
+      background: rgba(255,255,255,.96);
+      border-bottom: 1px solid var(--line);
+    }
+    .dialog-head h2 { margin: 0 0 3px; font-family: Georgia, serif; font-size: 1.3rem; }
+    .dialog-head p { margin: 0; color: var(--ink-soft); font-size: .84rem; }
+    .dialog-close {
+      flex: 0 0 auto;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink-soft);
+      background: white;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+    .dialog-body { padding: 21px; }
+    .settings-card { padding: 17px; border: 1px solid var(--line); border-radius: 15px; background: #fbfcff; }
+    .settings-card h3 { margin: 0 0 4px; font-size: 1rem; }
+    .settings-card > p { margin: 0 0 15px; color: var(--ink-soft); font-size: .84rem; }
+    .ai-enabled-note { display: none; margin: 11px 0 0; color: var(--good); font-size: .8rem; font-weight: 800; }
+    body.ai-enabled .ai-enabled-note { display: block; }
+    #openAIComprehension[hidden] { display: none; }
+    .stage-guide {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 16px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--accent-strong);
+      border-radius: 0 10px 10px 0;
+      background: #fff9e7;
+    }
+    .stage-guide strong { display: block; margin-bottom: 2px; font-size: .88rem; }
+    .stage-guide p { margin: 0; color: var(--ink-soft); font-size: .82rem; }
+    .stage-count { flex: 0 0 auto; color: #7b5a00; font-size: .76rem; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
+    .passage-name { margin: 0 0 4px; font-family: Georgia, serif; font-size: clamp(1.45rem, 3vw, 2rem); }
+    .metrics { display: flex; flex-wrap: wrap; gap: 9px 18px; color: var(--ink-soft); font-size: .84rem; }
+    .metrics strong { color: var(--ink); }
+
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      margin: 19px 0 0;
+      padding: 5px;
+      background: #eef1f8;
+      border-radius: 13px;
+    }
+    .mode-tab {
+      min-height: 42px;
+      border: 0;
+      border-radius: 9px;
+      color: var(--ink-soft);
+      background: transparent;
+      font-size: .83rem;
+      font-weight: 800;
+    }
+    .mode-tab .stage-number {
+      display: inline-grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      margin-right: 5px;
+      border-radius: 50%;
+      color: #68728d;
+      background: rgba(255,255,255,.55);
+      font-size: .72rem;
+    }
+    .mode-tab[aria-selected="true"] {
+      color: var(--ink);
+      background: white;
+      box-shadow: 0 2px 8px rgba(18,27,57,.10);
+    }
+    .mode-tab[aria-selected="true"] .stage-number { color: var(--ink); background: var(--accent); }
+    .mode-tab:focus-visible, .word:focus-visible, button:focus-visible {
+      outline: 3px solid rgba(49, 86, 217, .35);
+      outline-offset: 2px;
+    }
+
+    .cue-stage { padding: 18px 21px 13px; }
+    .study-card {
+      position: relative;
+      min-height: 220px;
+      padding: clamp(22px, 4vw, 34px);
+      overflow: auto;
+      color: #111936;
+      background:
+        linear-gradient(90deg, transparent 0 36px, rgba(223,72,82,.16) 36px 38px, transparent 38px),
+        repeating-linear-gradient(#fff 0 35px, #dce5f6 36px);
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+      line-height: 1.54;
+      letter-spacing: .035em;
+      display: grid;
+      align-items: center;
+    }
+    .cue-content { white-space: pre-wrap; }
+    .word {
+      display: inline;
+      margin: 0;
+      padding: 1px 2px;
+      border: 0;
+      border-radius: 4px;
+      color: inherit;
+      background: transparent;
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      text-align: left;
+    }
+    .word:hover { background: var(--accent); }
+    .word.revealed { color: #142c91; background: #e5eafe; }
+    .cold-space {
+      display: inline-block;
+      width: .72em;
+      height: .85em;
+      margin: 0 1px;
+      border-bottom: 2px solid #aeb8d0;
+      vertical-align: baseline;
+    }
+
+    .card-help {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+      color: var(--ink-soft);
+      font-size: .8rem;
+    }
+    .help-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+    .text-action {
+      border: 0;
+      padding: 0;
+      color: var(--blue);
+      background: none;
+      font-weight: 800;
+    }
+
+    .chunk-nav {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      margin-top: 15px;
+    }
+    .chunk-nav button {
+      width: max-content;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 12px;
+      color: var(--ink);
+      background: white;
+      font-weight: 800;
+    }
+    .chunk-nav button:last-child { justify-self: end; }
+    .chunk-nav button:disabled { opacity: .4; cursor: not-allowed; }
+    .chunk-indicator { color: var(--ink-soft); font-size: .82rem; font-weight: 800; }
+
+    .recall {
+      margin: 4px 21px 21px;
+      padding: 18px;
+      background: #f6f8fd;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .recall-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .recall h3 { margin: 0; font-size: .95rem; }
+    .recall textarea { min-height: 106px; background: white; }
+    .speech-row {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin: 0 0 11px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+    }
+    .mic-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 16px;
+      color: white;
+      background: var(--ink);
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .mic-button svg { width: 18px; height: 18px; fill: currentColor; }
+    .mic-button.listening { background: var(--bad); box-shadow: 0 0 0 5px rgba(191,59,70,.13); }
+    .mic-button.listening svg { animation: micPulse 1s ease-in-out infinite; }
+    .mic-button:disabled { opacity: .5; cursor: not-allowed; }
+    .speech-copy { min-width: 0; }
+    .speech-status { margin: 0; color: var(--ink); font-size: .86rem; font-weight: 800; }
+    .speech-note { margin: 1px 0 0; color: var(--ink-soft); font-size: .74rem; }
+    @keyframes micPulse { 50% { transform: scale(1.18); } }
+    .recall-actions { display: flex; align-items: center; gap: 10px; margin-top: 11px; }
+    .check {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 15px;
+      color: white;
+      background: var(--blue);
+      font-weight: 800;
+    }
+    .clear {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 13px;
+      color: var(--ink-soft);
+      background: white;
+      font-weight: 750;
+    }
+    .score { margin-left: auto; font-size: .87rem; font-weight: 800; }
+    .feedback { display: none; margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--line); }
+    .feedback.visible { display: block; }
+    .feedback-summary { font-weight: 800; margin-bottom: 8px; }
+    .feedback-words { line-height: 2; }
+    .feedback-words span { display: inline-block; margin: 2px 3px 2px 0; padding: 0 5px; border-radius: 5px; }
+    .correct { color: var(--good); background: #e3f6ee; }
+    .wrong { color: var(--bad); background: #fdebed; text-decoration: line-through; }
+    .missing { color: #8b4d00; background: #fff0cc; }
+
+    body.focus-mode { background: var(--ink); }
+    body.focus-mode header,
+    body.focus-mode .setup-panel,
+    body.focus-mode .panel-head,
+    body.focus-mode .recall { display: none; }
+    body.focus-mode .shell { width: min(940px, calc(100% - 28px)); padding-top: 5vh; }
+    body.focus-mode .workspace { display: block; }
+    body.focus-mode .practice-panel { width: 100%; box-shadow: 0 24px 80px rgba(0,0,0,.35); }
+    body.focus-mode .practice-top { padding-top: 24px; }
+
+    .empty-state {
+      display: none;
+      min-height: 278px;
+      place-items: center;
+      padding: 30px;
+      color: var(--ink-soft);
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      z-index: 10;
+      transform: translate(-50%, 20px);
+      padding: 10px 15px;
+      border-radius: 999px;
+      color: white;
+      background: var(--ink);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+      font-size: .88rem;
+      font-weight: 700;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 860px) {
+      .workspace { grid-template-columns: 1fr; }
+      .editor-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0 15px; }
+      .editor-body .passage-wrap, .editor-body .hint, .editor-body .primary, .editor-body .mini-rule { grid-column: 1 / -1; }
+      textarea { min-height: 170px; }
+      body.session-active .workspace { display: block; }
+    }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 18px, 1180px); padding-top: 16px; }
+      header { margin: 0 5px 16px; }
+      .saved { display: none; }
+      .header-tools { gap: 6px; }
+      .panel { border-radius: 17px; }
+      .editor-body { display: block; }
+      .mode-tabs { grid-template-columns: 1fr 1fr; }
+      .mode-tab { text-align: left; padding-left: 12px; }
+      .key-row { grid-template-columns: 1fr auto; }
+      .key-row .ai-action { grid-column: 1 / -1; }
+      .study-card { min-height: 245px; padding-left: 30px; }
+      .card-help { flex-direction: column; }
+      .recall-actions { flex-wrap: wrap; }
+      .speech-row { align-items: flex-start; }
+      .score { width: 100%; margin: 2px 0 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+    /* A quiet writing desk: restrained chrome, generous reading space. */
+    :root { --paper: #f2f4f8; --line: #e0e5ed; --ink-soft: #58637a; --blue: #385ad5; --shadow: 0 8px 32px rgba(23,36,67,.045); }
+    body { background: var(--paper); }
+    .shell { width: min(1280px, calc(100% - 64px)); padding: 26px 0 48px; }
+    header { margin-bottom: 30px; padding-bottom: 23px; border-bottom: 1px solid var(--line); }
+    .brand-mark { width: 38px; height: 38px; border-radius: 11px; box-shadow: none; font-size: 1.2rem; }
+    .brand-copy strong { letter-spacing: .16em; font-size: .95rem; }
+    .brand-copy span { font-size: .8125rem; }
+    .saved { font-size: .8125rem; }
+    .saved::before { display: none; }
+    .settings-button { background: transparent; font-size: .875rem; font-weight: 650; }
+    .workspace { grid-template-columns: minmax(280px, .78fr) minmax(0, 1.8fr); gap: 28px; }
+    .panel { border-radius: 18px; background: white; border-color: var(--line); }
+    .setup-panel { background: transparent; box-shadow: none; border: 0; }
+    .setup-panel .panel-head { padding: 12px 0 18px; border: 0; }
+    .setup-panel .panel-head h1 { font-size: 1.3rem; letter-spacing: -.03em; }
+    .step { font-size: .75rem; background: #e6eaf3; color: var(--ink-soft); }
+    .editor-body { padding: 0; }
+    .editor-intro { margin: 0 0 24px; color: var(--ink-soft); font-size: .9375rem; }
+    label { font-size: .875rem; font-weight: 600; }
+    .title-input, textarea { background: white; border-radius: 10px; }
+    .title-input { margin-bottom: 20px; height: 46px; }
+    #sourceText { min-height: 265px; font-size: 1rem; }
+    .hint { font-size: .8125rem; margin: 10px 0 18px; }
+    .editor-count { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: .8125rem; color: var(--ink-soft); }
+    .primary { border-radius: 10px; min-height: 48px; font-weight: 650; box-shadow: none; }
+    .mini-rule { font-size: .875rem; border: 0; margin-top: 10px; }
+    .practice-panel > .panel-head { padding: 17px 28px; }
+    .practice-panel > .panel-head h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .13em; color: var(--ink-soft); }
+    .panel-actions { flex-wrap: wrap; justify-content: flex-end; }
+    .header-action { font-size: .875rem; font-weight: 550; border-color: transparent; background: transparent; }
+    #openAIComprehension { color: var(--blue); background: var(--blue-soft); }
+    .practice-top { display: flex; flex-direction: column; padding: 27px 32px 0; }
+    .passage-name { order: 0; font-size: clamp(1.8rem, 2.8vw, 2.4rem); font-weight: 500; letter-spacing: -.035em; line-height: 1.2; margin-bottom: 12px; overflow-wrap: anywhere; }
+    .metrics { order: 1; font-size: .8125rem; gap: 7px 18px; }
+    .metrics strong { font-weight: 600; }
+    .mode-tabs { order: 2; background: #f1f3f8; padding: 5px; margin: 26px 0 0; border-radius: 12px; }
+    .mode-tab { font-size: .875rem; font-weight: 650; min-height: 48px; }
+    .mode-tab[aria-selected="true"] { box-shadow: 0 2px 5px #121b3910; }
+    .mode-tab .stage-number { background: transparent; }
+    .mode-tab[aria-selected="true"] .stage-number { color: white; background: var(--ink); }
+    .stage-guide { order: 3; background: transparent; padding: 18px 0 0; margin: 0; border: 0; gap: 12px; }
+    .stage-guide strong { font-size: .9375rem; font-weight: 650; }
+    .stage-guide p { font-size: .875rem; }
+    .stage-count { color: var(--ink-soft); font-size: .75rem; letter-spacing: .04em; padding-top: 3px; }
+    .cue-stage { padding: 20px 32px 22px; }
+    .study-card { min-height: 228px; padding: 32px; background: #f8f9fc; border: 1px solid #e9edf5; border-radius: 12px; font-size: clamp(1.45rem, 2.7vw, 2rem); line-height: 1.9; letter-spacing: .015em; overflow-wrap: anywhere; }
+    .word { min-width: .55em; padding: 2px 3px; border-radius: 5px; transition: background .15s; }
+    .word:hover { background: #ffe596; }
+    .card-help { font-size: .8125rem; margin-top: 12px; flex-wrap: wrap; }
+    .text-action { font-weight: 600; }
+    .chunk-nav { margin-top: 22px; }
+    .chunk-nav button { font-size: .875rem; font-weight: 600; min-height: 42px; }
+    .chunk-center { display: grid; justify-items: center; gap: 7px; }
+    .chunk-indicator { font-size: .8125rem; font-weight: 550; }
+    .chunk-dots { display: flex; gap: 5px; max-width: 180px; flex-wrap: wrap; justify-content: center; }
+    .chunk-dots span { width: 16px; height: 4px; background: #e2e6ef; border-radius: 4px; }
+    .chunk-dots .current { background: var(--blue); }
+    .chunk-dots .checked { background: var(--good); }
+    .recall { margin: 0; padding: 24px 32px 28px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: white; }
+    .recall-head { margin-bottom: 14px; }
+    .recall h3 { font-size: 1rem; font-weight: 650; }
+    .recall-caption { color: var(--ink-soft); font-size: .875rem; margin: 3px 0 0; }
+    .speech-row { padding: 0; border: 0; background: none; align-items: flex-start; }
+    .mic-button { border-radius: 9px; font-size: .875rem; font-weight: 650; padding: 0 13px; background: #eef2fb; color: var(--blue); }
+    .mic-button.listening { color: white; }
+    .speech-status { font-size: .8125rem; font-weight: 500; }
+    .speech-note { font-size: .75rem; }
+    .recall textarea { min-height: 112px; background: #fafbfe; font-size: 1rem; }
+    .check, .clear { min-height: 44px; font-size: .875rem; font-weight: 650; }
+    .score { font-size: .875rem; }
+    .feedback { padding-top: 18px; }
+    .feedback-summary { font-size: .9375rem; font-weight: 600; }
+    .feedback-legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 0; font-size: .8125rem; color: var(--ink-soft); }
+    .feedback-legend span { padding: 1px 6px; border-radius: 4px; }
+    .practice-footer { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; gap: 12px; border-top: 1px solid var(--line); background: #fafbfe; }
+    .practice-panel { display: flex; flex-direction: column; }
+    .practice-panel > .panel-head { order: 0; }
+    .practice-top { order: 1; }
+    .cue-stage { order: 2; }
+    .practice-footer { order: 3; }
+    .recall { order: 4; }
+    .primary:disabled { opacity: .5; cursor: not-allowed; }
+    .practice-footer p { margin: 0; color: var(--ink-soft); font-size: .8125rem; }
+    .advance { border: 0; border-radius: 9px; background: var(--ink); color: white; padding: 11px 16px; min-height: 44px; font-size: .875rem; font-weight: 650; }
+    .dialog-head h2 { font-family: inherit; font-size: 1.2rem; letter-spacing: -.02em; }
+    .dialog-head p, .settings-card > p, .understand-head p { font-size: .9375rem; }
+    .key-note, .ai-status { font-size: .8125rem; }
+    .dialog-close { width: 44px; height: 44px; }
+    .understand-panel { background: #f8f9fe; }
+    .focus-exit { display: none; }
+    body.focus-mode { background: #e9edf5; }
+    body.focus-mode .focus-exit { display: block; position: fixed; top: 18px; right: 22px; z-index: 5; background: white; }
+    body.focus-mode .shell { padding-top: 80px; }
+    body.focus-mode .practice-panel { box-shadow: var(--shadow); }
+    body.focus-mode .study-card { min-height: 38vh; }
+    body.session-active .practice-panel { width: min(900px, 100%); }
+    @media (max-width: 1000px) {
+      .shell { width: calc(100% - 36px); }
+      .workspace { grid-template-columns: minmax(250px, .8fr) minmax(0, 1.4fr); gap: 20px; }
+      .practice-top, .cue-stage { padding-left: 22px; padding-right: 22px; }
+      .practice-panel > .panel-head, .recall, .practice-footer { padding-left: 22px; padding-right: 22px; }
+      .panel-head { flex-wrap: wrap; }
+      .editor-body { display: block; }
+    }
+    @media (max-width: 760px) {
+      .workspace { grid-template-columns: 1fr; }
+      .setup-panel { max-width: 580px; width: 100%; margin: auto; }
+      body:not(.session-active) .practice-panel { display: none; }
+      header { margin-bottom: 22px; }
+      .saved { display: none; }
+      #sourceText { min-height: 240px; }
+      .panel-actions { gap: 2px; }
+      .mode-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .mode-tab { text-align: center; padding: 6px 2px; font-size: .8125rem; }
+      .mode-tab .stage-number { display: block; margin: 0 auto 3px; }
+      .stage-count { display: none; }
+      .study-card { padding: 22px; min-height: 210px; }
+      .speech-row { flex-direction: column; }
+      .practice-footer p { max-width: 160px; }
+      .practice-top, .cue-stage, .recall, .practice-footer { padding-left: 18px; padding-right: 18px; }
+      .recall-actions .score { width: auto; margin-left: auto; }
+      .key-row { grid-template-columns: minmax(0, 1fr) auto; }
+      #forgetKey { grid-column: 1 / -1; }
+      .understand-head { flex-direction: column; gap: 8px; }
+    }
+    [hidden] { display: none !important; }
+    select { font: inherit; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 9px; padding: 10px; max-width: 100%; }
+    .library-dialog { width: min(900px, calc(100% - 24px)); }
+    .library-toolbar, .library-footer, .session-queue, .test-tools { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .library-toolbar { justify-content: space-between; margin: 0 0 16px; }
+    .library-toolbar p, .library-footer p { margin: 0; font-size: .875rem; color: var(--ink-soft); }
+    .library-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-height: 330px; overflow: auto; margin-bottom: 20px; }
+    .library-item { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border: 1px solid var(--line); border-radius: 12px; margin: 0; cursor: pointer; background: white; }
+    .library-item:has(input:checked) { background: #f0f4ff; border-color: #8fa4ee; }
+    .library-item input { margin: 5px 0 0; width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--blue); }
+    .library-item strong { display: block; font-size: .9375rem; color: var(--ink); overflow-wrap: anywhere; }
+    .library-item small { display: block; color: var(--ink-soft); font-weight: 400; font-size: .8125rem; margin-top: 6px; }
+    .library-item .preview-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .import-box { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: #f8f9fc; }
+    .import-box summary { cursor: pointer; font-weight: 650; }
+    .import-box label { margin-top: 16px; }
+    .import-box textarea { min-height: 180px; }
+    .import-preview { max-height: 160px; overflow: auto; padding-left: 22px; font-size: .875rem; }
+    .library-footer { position: sticky; bottom: 0; justify-content: space-between; padding: 18px 22px; background: white; border-top: 1px solid var(--line); }
+    .session-queue { order: 0; padding: 14px 28px; background: #f5f7fc; border-bottom: 1px solid var(--line); }
+    .session-queue label { margin: 0; font-size: .8125rem; }
+    .session-queue select { flex: 1; min-width: 130px; font-size: .875rem; }
+    .session-queue .header-action { border-color: var(--line); background: white; }
+    .library-invite { display: block; width: 100%; text-align: left; border: 1px solid #ccd6f3; border-radius: 12px; padding: 15px; margin: 0 0 24px; background: #eef2ff; color: var(--ink); }
+    .library-invite strong, .library-invite span { display: block; }
+    .library-invite span { margin-top: 4px; color: var(--ink-soft); font-size: .875rem; }
+    .test-tools { justify-content: space-between; margin: 16px 0; }
+    .input-method { display: inline-flex; background: #edf0f7; padding: 4px; border-radius: 10px; gap: 4px; }
+    .input-method button { border: 0; border-radius: 7px; padding: 8px 14px; font-weight: 600; color: var(--ink-soft); background: transparent; font-size: .875rem; }
+    .input-method button[aria-pressed="true"] { color: var(--ink); background: white; box-shadow: 0 1px 5px #121b3912; }
+    .hide-cues { display: flex; gap: 7px; align-items: center; font-weight: 500; margin: 0; }
+    .hide-cues input { accent-color: var(--blue); width: 17px; height: 17px; }
+    .test-context { font-size: .8125rem; color: var(--blue); margin: 8px 0 0; }
+    .test-cues-hidden .cue-content { visibility: hidden; }
+    .test-cues-hidden .study-card::after { content: 'Cues hidden · Give your memory a moment'; position: absolute; inset: 0; display: grid; place-items: center; padding: 30px; text-align: center; font: 500 .9375rem/1.6 system-ui; color: var(--ink-soft); }
+    .test-cues-hidden .help-actions { visibility: hidden; }
+    .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
+    .result-stats div { border-radius: 9px; padding: 12px; background: #f2f5fa; color: var(--ink-soft); font-size: .8125rem; }
+    .result-stats strong { display: block; font-size: 1.25rem; color: var(--ink); }
+    .result-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+    .speech-row { padding: 16px; background: #f3f6ff; border-radius: 10px; }
+    .recall-head { align-items: flex-start; }
+    .recall-head .score { white-space: nowrap; background: #edf4ff; border-radius: 9px; padding: 6px 10px; }
+    .recall-head .score:empty { display: none; }
+    .feedback { scroll-margin-top: 24px; }
+    body.focus-mode .session-queue { display: none; }
+    @media(max-width: 600px) { .library-list { grid-template-columns: 1fr; } .header-tools { flex-wrap: wrap; justify-content: flex-end; } .brand-copy span { display: none; } .session-queue { padding: 12px 18px; } .session-queue label { width: 100%; } .result-stats div { padding: 8px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">F</div>
+        <div class="brand-copy"><strong>FLOW</strong><span>A little practice. A lasting memory.</span></div>
+      </div>
+      <div class="header-tools">
+        <div class="saved" id="savedStatus">Saved on this device</div>
+        <button class="settings-button" id="openLibrary" type="button">Passages</button>
+        <button class="settings-button" id="openSettings" type="button">Settings</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <section class="panel setup-panel" aria-labelledby="editor-title">
+        <div class="panel-head">
+          <h1 id="editor-title">Your passage</h1>
+          <span class="step">Set up</span>
+        </div>
+        <div class="editor-body">
+          <button class="library-invite" id="libraryInvite" type="button"><strong>Your passage library →</strong><span>Paste several passages once. Choose what to practise.</span></button>
+          <p class="editor-intro">Give your words a place to stick. Add a passage, then gradually let go of the cues.</p>
+          <div>
+            <label for="passageTitle">Passage name</label>
+            <input class="title-input" id="passageTitle" value="The value of practice" autocomplete="off">
+          </div>
+          <div class="passage-wrap">
+            <label for="sourceText">Text to memorise</label>
+            <textarea id="sourceText" spellcheck="true">We are what we repeatedly do. Excellence, then, is not an act, but a habit.
+
+Practice does not make perfect. Only perfect practice makes perfect.</textarea>
+          </div>
+          <div class="editor-count"><span id="wordCount">0 words</span><span id="partCount">1 practice part</span></div>
+          <p class="hint">Your passage is saved on this device.</p>
+          <button class="primary" id="generateBtn" type="button">Start practising →</button>
+          <div class="mini-rule">
+            <span class="keycap">Tip</span>
+            <span>Start with the full text. Fade a few words, use first letters, then try from memory.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel practice-panel" aria-labelledby="practice-title">
+        <nav class="session-queue" aria-label="Selected passages" id="sessionQueue" hidden><label for="queueSelect" id="queueLabel">Your selection</label><select id="queueSelect"></select><button class="header-action" id="nextPassage" type="button">Next passage →</button></nav>
+        <div class="panel-head">
+          <h2 id="practice-title">Practice</h2>
+          <div class="panel-actions">
+            <button class="header-action" id="openAIComprehension" type="button" hidden>AI comprehension</button>
+            <button class="header-action" id="editPassage" type="button">Edit passage</button>
+            <button class="header-action" id="focusMode" type="button">Focus mode</button>
+          </div>
+        </div>
+
+        <div class="practice-top">
+          <div class="stage-guide">
+            <div>
+              <strong id="stageTitle">Initial-letter retrieval</strong>
+              <p id="stageHelp">Say each word aloud. Tap a letter only when you get stuck.</p>
+            </div>
+            <span class="stage-count" id="stageCount">Stage 3 of 4</span>
+          </div>
+          <h2 class="passage-name" id="displayTitle">The value of practice</h2>
+          <div class="metrics" aria-live="polite">
+            <span>Part <strong id="chunkStat">1 of 1</strong></span>
+            <span>Match <strong id="accuracyStat">—</strong></span>
+            <span><strong id="revealedCount">0</strong> hints revealed</span>
+          </div>
+          <div class="mode-tabs" role="tablist" aria-label="Cue strength">
+            <button class="mode-tab" role="tab" aria-selected="false" data-mode="full"><span class="stage-number">1</span>Read</button>
+            <button class="mode-tab" role="tab" aria-selected="false" data-mode="fade"><span class="stage-number">2</span>Fade</button>
+            <button class="mode-tab" role="tab" aria-selected="true" data-mode="letters"><span class="stage-number">3</span>Initials</button>
+            <button class="mode-tab" role="tab" aria-selected="false" data-mode="cold"><span class="stage-number">4</span>Recall</button>
+          </div>
+        </div>
+
+        <div class="cue-stage">
+          <div class="study-card" id="studyCard" aria-label="Passage cues">
+            <div class="cue-content" id="cueContent"></div>
+          </div>
+          <div class="card-help">
+            <span id="cueHint">Tap a letter to reveal its word.</span>
+            <div class="help-actions">
+              <button class="text-action" id="revealChunk" type="button">Reveal this phrase</button>
+              <button class="text-action" id="resetReveals" type="button">Hide reveals</button>
+            </div>
+          </div>
+          <nav class="chunk-nav" aria-label="Passage chunks">
+            <button id="previousChunk" type="button">← Previous</button>
+            <div class="chunk-center"><span class="chunk-indicator" id="chunkIndicator">Part 1 of 1</span><div class="chunk-dots" id="chunkDots" aria-hidden="true"></div></div>
+            <button id="nextChunk" type="button">Next →</button>
+          </nav>
+          <div class="empty-state" id="emptyState">Add a passage on the left to begin.</div>
+        </div>
+
+        <div class="practice-footer"><p id="nextStepHint">When the words feel familiar, try fewer cues.</p><button class="advance" id="advanceStage" type="button">Try Fade →</button></div>
+        <section class="recall" aria-labelledby="recall-title">
+          <div class="recall-head">
+            <div><h3 id="recall-title">Your turn. From memory.</h3><p class="recall-caption">Recall this part in your own time.</p><p class="test-context" id="testContext"></p></div><span class="score" id="score" aria-live="polite"></span>
+          </div>
+          <div class="test-tools"><div class="input-method" role="group" aria-label="Answer method"><button type="button" id="typeAnswer" aria-pressed="true">Type</button><button type="button" id="speakAnswer" aria-pressed="false">Speak</button></div><label class="hide-cues"><input id="hideTestCues" type="checkbox">Hide the cues</label></div>
+          <div class="speech-row" id="speechPanel" hidden>
+            <button class="mic-button" id="micButton" type="button" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm-1-9a1 1 0 1 1 2 0v6a1 1 0 1 1-2 0V6Zm7 6a1 1 0 1 1 2 0 8 8 0 0 1-7 7.94V22h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.06A8 8 0 0 1 4 12a1 1 0 1 1 2 0 6 6 0 0 0 12 0Z"/></svg>
+              <span id="micLabel">Start reciting</span>
+            </button>
+            <div class="speech-copy">
+              <p class="speech-status" id="speechStatus" role="status" aria-live="polite">Speak the current chunk and watch your words appear below.</p>
+              <p class="speech-note">FLOW does not save your audio. Speech recognition is handled by your browser and may require microphone permission.</p>
+            </div>
+          </div>
+          <label class="sr-only" for="recallText">Your recalled passage</label>
+          <textarea id="recallText" placeholder="What comes next? Type the words you remember…" spellcheck="false" maxlength="12000"></textarea>
+          <div class="recall-actions">
+            <button class="check" id="checkBtn" type="button">Check recall</button>
+            <button class="clear" id="clearBtn" type="button">Start over</button>
+          </div>
+          <div class="feedback" id="feedback">
+            <div class="result-stats"><div><strong id="correctCount">0</strong>Correct</div><div><strong id="missingCount">0</strong>Missing</div><div><strong id="extraCount">0</strong>Extra / different</div></div>
+            <div class="feedback-summary" id="feedbackSummary"></div>
+            <div class="feedback-words" id="feedbackWords"></div>
+            <div class="feedback-legend"><span class="correct">Correct</span><span class="missing">+ Missing</span><span class="wrong">Extra / different</span></div>
+            <div class="result-actions"><button class="clear" id="retryRecall" type="button">Try again</button><button class="advance" id="continueRecall" type="button">Continue →</button></div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+  <button class="settings-button focus-exit" id="exitFocus" type="button">Exit focus · Esc</button>
+
+  <dialog class="dialog-shell library-dialog" id="libraryDialog" aria-labelledby="libraryTitle">
+    <div class="dialog-head"><div><h2 id="libraryTitle">Your passages</h2><p>Save once. Practise a little at a time.</p></div><button class="dialog-close" type="button" data-close-dialog aria-label="Close passages">×</button></div>
+    <div class="dialog-body">
+      <div class="library-toolbar"><p id="libraryCount"></p><button class="text-action" id="selectAllPassages" type="button">Select all</button></div>
+      <div class="library-list" id="libraryList"></div>
+      <details class="import-box" id="importBox"><summary>Add passages</summary>
+        <label for="importText">Paste your text</label><textarea id="importText" maxlength="200000" placeholder="Paste several paragraphs, a speech, or your study notes…"></textarea>
+        <label for="importSplit">Create a passage for</label><select id="importSplit"><option value="paragraphs">Each paragraph (blank line between)</option><option value="separator">Each section separated by ---</option><option value="whole">The entire text</option></select>
+        <p class="hint">Use a # Heading on the first line to name a passage. Long passages are divided into short practice parts.</p>
+        <ol class="import-preview" id="importPreview"></ol><p class="hint" id="importStatus" role="status"></p><button class="check" id="saveImport" type="button" disabled>Save passages</button>
+      </details>
+      <p class="hint">Stored in this browser. Your library and place in each passage return when you reopen FLOW.</p>
+    </div>
+    <div class="library-footer"><p id="selectionCount">0 selected</p><button class="advance" id="practiceSelected" type="button">Practise selected →</button></div>
+  </dialog>
+
+  <dialog class="dialog-shell" id="settingsDialog" aria-labelledby="settingsTitle">
+    <div class="dialog-head">
+      <div><h2 id="settingsTitle">Settings</h2><p>Optional services and privacy controls.</p></div>
+      <button class="dialog-close" type="button" data-close-dialog aria-label="Close settings">×</button>
+    </div>
+    <div class="dialog-body">
+      <section class="settings-card" aria-labelledby="openaiSettingsTitle">
+        <h3 id="openaiSettingsTitle">OpenAI connection</h3>
+        <p>Add your API key to unlock AI comprehension as a separate practice option.</p>
+        <label for="apiKey">OpenAI API key</label>
+        <div class="key-row">
+          <input id="apiKey" type="password" placeholder="sk-…" autocomplete="off" autocapitalize="none" spellcheck="false">
+          <button class="key-control" id="toggleKey" type="button" aria-pressed="false">Show</button>
+          <button class="key-control" id="forgetKey" type="button">Remove</button>
+        </div>
+        <p class="key-note"><strong>Session only:</strong> the key stays in this tab and is never saved by FLOW. Use a restricted, temporary project key.</p>
+        <p class="ai-enabled-note">AI comprehension is now available in Practice.</p>
+        <p class="ai-status" id="keyStatus" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog class="dialog-shell" id="aiDialog" aria-labelledby="understand-title">
+    <div class="dialog-head">
+      <div><h2 id="understand-title">Understand before you memorise</h2><p>Clarify the passage before practising exact recall.</p></div>
+      <button class="dialog-close" type="button" data-close-dialog aria-label="Close AI comprehension">×</button>
+    </div>
+    <div class="dialog-body">
+      <section class="understand-panel">
+        <div class="understand-head">
+          <div>
+            <h3>AI comprehension</h3>
+            <p>Ask AI to explain the meaning, structure and important words in your passage.</p>
+          </div>
+          <span class="ai-badge">Optional AI</span>
+        </div>
+        <button class="ai-action" id="explainPassage" type="button">Explain current passage</button>
+        <p class="key-note">Your current passage is sent to OpenAI only when you click Explain.</p>
+        <p class="ai-status" id="aiStatus" role="status" aria-live="polite"></p>
+        <div class="ai-result" id="aiResult" hidden>
+          <div class="ai-result-head">
+            <h4>Meaning before memory</h4>
+            <button class="text-action" id="clearExplanation" type="button">Clear</button>
+          </div>
+          <div class="ai-output" id="aiOutput"></div>
+        </div>
+      </section>
+    </div>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const els = {
+        title: document.querySelector('#passageTitle'),
+        source: document.querySelector('#sourceText'),
+        displayTitle: document.querySelector('#displayTitle'),
+        cue: document.querySelector('#cueContent'),
+        cueHint: document.querySelector('#cueHint'),
+        chunkStat: document.querySelector('#chunkStat'),
+        accuracy: document.querySelector('#accuracyStat'),
+        revealed: document.querySelector('#revealedCount'),
+        chunkIndicator: document.querySelector('#chunkIndicator'),
+        previous: document.querySelector('#previousChunk'),
+        next: document.querySelector('#nextChunk'),
+        stageTitle: document.querySelector('#stageTitle'),
+        stageHelp: document.querySelector('#stageHelp'),
+        stageCount: document.querySelector('#stageCount'),
+        settingsDialog: document.querySelector('#settingsDialog'),
+        aiDialog: document.querySelector('#aiDialog'),
+        openAI: document.querySelector('#openAIComprehension'),
+        apiKey: document.querySelector('#apiKey'),
+        keyStatus: document.querySelector('#keyStatus'),
+        explainButton: document.querySelector('#explainPassage'),
+        aiStatus: document.querySelector('#aiStatus'),
+        aiResult: document.querySelector('#aiResult'),
+        aiOutput: document.querySelector('#aiOutput'),
+        micButton: document.querySelector('#micButton'),
+        micLabel: document.querySelector('#micLabel'),
+        speechStatus: document.querySelector('#speechStatus'),
+        recall: document.querySelector('#recallText'),
+        score: document.querySelector('#score'),
+        feedback: document.querySelector('#feedback'),
+        feedbackSummary: document.querySelector('#feedbackSummary'),
+        feedbackWords: document.querySelector('#feedbackWords'),
+        toast: document.querySelector('#toast'),
+        focusButton: document.querySelector('#focusMode')
+      };
+
+      const stages = {
+        full: ['Read for meaning', 'Read the phrase aloud and notice its natural rhythm.', 'Stage 1 of 4', 'Read this phrase aloud twice.'],
+        fade: ['Build the pathway', 'Alternate between visible words and initials. Supply the missing words aloud.', 'Stage 2 of 4', 'Full words and initials alternate. Tap an initial if needed.'],
+        letters: ['Initial-letter retrieval', 'Say each word aloud. Tap a letter only when you get stuck.', 'Stage 3 of 4', 'Tap a letter to reveal its word.'],
+        cold: ['Recall without cues', 'Recite the phrase from memory, then type it below to check yourself.', 'Stage 4 of 4', 'Only punctuation and word positions remain.']
+      };
+
+      let chunks = [];
+      let tokens = [];
+      let currentChunk = 0;
+      let mode = 'letters';
+      let revealed = new Set();
+      let lastExplainedSource = '';
+      let speechRecognition;
+      let isListening = false;
+      let scoreSpeechOnEnd = false;
+      let finalTranscript = '';
+      let toastTimer;
+      const checkedParts = new Set();
+      const stageOrder = ['full', 'fade', 'letters', 'cold'];
+      const advanceButton = document.querySelector('#advanceStage');
+      let saveTimer;
+      let library = [];
+      let activeId = null;
+      let queue = [];
+      let selectedPassages = new Set();
+      let loadingPassage = false;
+      let testHintsUsed = false;
+      const libraryDialog = document.querySelector('#libraryDialog');
+
+      function persistLibrary() {
+        try {
+          localStorage.setItem('flow-library-v1', JSON.stringify({ entries: library, activeId, queue }));
+          document.querySelector('#savedStatus').textContent = 'Saved on this device';
+          return true;
+        } catch (_) {
+          document.querySelector('#savedStatus').textContent = 'Storage full · changes not saved';
+          showToast('Browser storage is unavailable or full. Keep a copy of your text.');
+          return false;
+        }
+      }
+
+      function makePassage(title, source) {
+        return { id: crypto.randomUUID(), title, source, part: 0, stage: 'full', checked: [] };
+      }
+
+      function persistProgress() {
+        if (loadingPassage) return;
+        const passage = library.find(item => item.id === activeId);
+        if (!passage) return;
+        passage.part = currentChunk;
+        passage.stage = mode;
+        passage.checked = [...checkedParts];
+        persistLibrary();
+      }
+
+      function renderQueue() {
+        const select = document.querySelector('#queueSelect');
+        select.replaceChildren();
+        queue.forEach(id => {
+          const item = library.find(passage => passage.id === id);
+          if (!item) return;
+          const option = document.createElement('option');
+          option.value = id;
+          option.textContent = item.title;
+          select.append(option);
+        });
+        select.value = activeId;
+        document.querySelector('#sessionQueue').hidden = !queue.length;
+        document.querySelector('#queueLabel').textContent = `Passage ${Math.max(0, queue.indexOf(activeId)) + 1} of ${queue.length}`;
+        document.querySelector('#nextPassage').disabled = queue.indexOf(activeId) >= queue.length - 1;
+      }
+
+      function loadPassage(id, activate = true) {
+        clearTimeout(saveTimer);
+        const item = library.find(passage => passage.id === id);
+        if (!item) return;
+        loadingPassage = true;
+        activeId = id;
+        els.title.value = item.title;
+        els.source.value = item.source;
+        chunks = splitIntoChunks(item.source);
+        els.displayTitle.textContent = item.title;
+        checkedParts.clear();
+        (item.checked || []).forEach(index => checkedParts.add(index));
+        setChunk(item.part || 0);
+        setMode(stageOrder.includes(item.stage) ? item.stage : 'full');
+        els.aiOutput.textContent = '';
+        els.aiResult.hidden = true;
+        lastExplainedSource = '';
+        setAIStatus('');
+        updateEditor();
+        renderQueue();
+        loadingPassage = false;
+        persistLibrary();
+        if (activate) {
+          document.body.classList.add('session-active');
+          document.querySelector('.practice-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+
+      function updateSelection() {
+        document.querySelector('#selectionCount').textContent = `${selectedPassages.size} selected · library order`;
+        document.querySelector('#practiceSelected').disabled = !selectedPassages.size;
+        document.querySelector('#selectAllPassages').textContent = selectedPassages.size === library.length ? 'Deselect all' : 'Select all';
+      }
+
+      function renderLibrary() {
+        const list = document.querySelector('#libraryList');
+        list.replaceChildren();
+        document.querySelector('#libraryCount').textContent = `${library.length} saved ${library.length === 1 ? 'passage' : 'passages'}`;
+        library.forEach(item => {
+          const label = document.createElement('label');
+          label.className = 'library-item';
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = selectedPassages.has(item.id);
+          checkbox.addEventListener('change', () => {
+            if (checkbox.checked) selectedPassages.add(item.id); else selectedPassages.delete(item.id);
+            updateSelection();
+          });
+          const copy = document.createElement('div');
+          const title = document.createElement('strong');
+          title.textContent = item.title;
+          const preview = document.createElement('small');
+          preview.className = 'preview-text';
+          preview.textContent = item.source.slice(0, 180);
+          const meta = document.createElement('small');
+          const parts = splitIntoChunks(item.source).length;
+          meta.textContent = `${normalizeWords(item.source).length} words · ${parts} ${parts === 1 ? 'part' : 'parts'} · ${(item.checked || []).length} recalled`;
+          copy.append(title, preview, meta);
+          label.append(checkbox, copy);
+          list.append(label);
+        });
+        updateSelection();
+      }
+
+      function openLibrary() {
+        savePassage();
+        selectedPassages = new Set(queue);
+        renderLibrary();
+        libraryDialog.showModal();
+      }
+
+      function parseImport() {
+        const raw = document.querySelector('#importText').value.trim();
+        if (!raw) return [];
+        const split = document.querySelector('#importSplit').value;
+        const texts = split === 'whole' ? [raw] : raw.split(split === 'separator' ? /^\s*---+\s*$/m : /\r?\n\s*\r?\n/);
+        return texts.map(text => {
+          text = text.trim();
+          const heading = text.match(/^#\s+([^\n]+)\r?\n([\s\S]*)$/);
+          const source = heading ? heading[2].trim() : text;
+          const title = heading ? heading[1].trim() : source.split(/\s+/).slice(0, 7).join(' ') + (source.split(/\s+/).length > 7 ? '…' : '');
+          return { title, source };
+        }).filter(item => normalizeWords(item.source).length);
+      }
+
+      function previewImport() {
+        const items = parseImport();
+        const preview = document.querySelector('#importPreview');
+        preview.replaceChildren();
+        items.slice(0, 50).forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.title} · ${normalizeWords(item.source).length} words`;
+          preview.append(li);
+        });
+        document.querySelector('#importStatus').textContent = items.length ? `${items.length} passages ready${items.length > 50 ? ' (first 50 shown)' : ''}. Existing duplicates will be skipped.` : 'Paste text to preview your passages.';
+        document.querySelector('#saveImport').disabled = !items.length;
+      }
+
+      function continuePractice() {
+        if (currentChunk < chunks.length - 1) { setChunk(currentChunk + 1); setMode('full'); }
+        else if (queue.indexOf(activeId) < queue.length - 1) loadPassage(queue[queue.indexOf(activeId) + 1]);
+        else { openLibrary(); showToast('End of your selection. Choose what to practise next.'); }
+      }
+
+      const isWord = value => /[\p{L}\p{M}\p{N}]/u.test(value);
+
+      function tokenize(text) {
+        return text.match(/[\p{L}\p{M}]+(?:['’][\p{L}\p{M}]+)?|\p{N}+(?:[.,]\p{N}+)*|[^\p{L}\p{M}\p{N}\s]+|\s+/gu) || [];
+      }
+
+      function normalizeWords(text) {
+        return (text.toLocaleLowerCase().match(/[\p{L}\p{M}\p{N}]+(?:['’][\p{L}\p{M}]+)?/gu) || [])
+          .map(word => word.replace(/’/g, "'"));
+      }
+
+      function splitIntoChunks(text) {
+        const sentences = text
+          .split(/(?<=[.!?])\s+|\n+/u)
+          .map(value => value.trim())
+          .filter(Boolean)
+          .flatMap(sentence => {
+            // Bound each practice part, including long sentences without punctuation.
+            const pieces = []; let part = ''; let words = 0;
+            tokenize(sentence).forEach(token => {
+              if (isWord(token) && words === 26) { pieces.push(part.trim()); part = ''; words = 0; }
+              part += token;
+              if (isWord(token)) words++;
+            });
+            if (part.trim()) pieces.push(part.trim());
+            return pieces;
+          });
+        const result = [];
+        let group = '';
+        sentences.forEach(sentence => {
+          const combined = group ? `${group} ${sentence}` : sentence;
+          if (group && normalizeWords(combined).length > 26) {
+            result.push(group);
+            group = sentence;
+          } else {
+            group = combined;
+          }
+        });
+        if (group) result.push(group);
+        return result.length ? result : [text.trim()];
+      }
+
+      function firstCharacter(value) {
+        const match = value.match(/[\p{L}\p{M}\p{N}]/u);
+        return match ? match[0] : value;
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        els.toast.textContent = message;
+        els.toast.classList.add('show');
+        toastTimer = setTimeout(() => els.toast.classList.remove('show'), 1800);
+      }
+
+      function savePassage() {
+        clearTimeout(saveTimer);
+        const entry = library.find(item => item.id === activeId);
+        if (entry) {
+          if (entry.source !== els.source.value.trim()) { entry.checked = []; entry.part = 0; entry.stage = 'full'; }
+          entry.title = els.title.value.trim() || 'Untitled passage';
+          entry.source = els.source.value.trim();
+          persistLibrary();
+        }
+        try {
+          localStorage.setItem('flow-passage', JSON.stringify({ title: els.title.value, source: els.source.value }));
+          document.querySelector('#savedStatus').textContent = 'Saved on this device';
+        } catch (_) {
+          document.querySelector('#savedStatus').textContent = 'Saving unavailable';
+        }
+      }
+
+      function updateEditor() {
+        const words = normalizeWords(els.source.value).length;
+        const parts = words ? splitIntoChunks(els.source.value).length : 0;
+        document.querySelector('#wordCount').textContent = `${words} ${words === 1 ? 'word' : 'words'}`;
+        document.querySelector('#partCount').textContent = `${parts} practice ${parts === 1 ? 'part' : 'parts'}`;
+        document.querySelector('#generateBtn').disabled = words === 0;
+      }
+
+      function updateAdvance() {
+        const index = stageOrder.indexOf(mode);
+        advanceButton.textContent = index < 3 ? `Try ${['Read', 'Fade', 'Initials', 'Recall'][index + 1]} →` : currentChunk < chunks.length - 1 ? 'Next part →' : 'Practise again ↺';
+        document.querySelector('#nextStepHint').textContent = index < 3 ? 'When the words feel familiar, try fewer cues.' : 'Check your recall, then keep practising.';
+      }
+
+      function setAIStatus(message, isError = false) {
+        els.aiStatus.textContent = message;
+        els.aiStatus.classList.toggle('error', isError);
+      }
+
+      function hasValidAPIKey() {
+        return els.apiKey.value.trim().length >= 20;
+      }
+
+      function updateAIAvailability({ announce = false } = {}) {
+        const enabled = hasValidAPIKey();
+        document.body.classList.toggle('ai-enabled', enabled);
+        els.openAI.hidden = !enabled;
+        els.keyStatus.textContent = announce
+          ? (enabled ? 'Key added for this tab. It will be checked when you request an explanation.' : 'Enter your full API key to unlock AI comprehension.')
+          : '';
+        els.keyStatus.classList.toggle('error', announce && !enabled);
+        if (!enabled && els.aiDialog.open) els.aiDialog.close();
+      }
+
+      function extractResponseText(data) {
+        if (typeof data.output_text === 'string' && data.output_text.trim()) return data.output_text.trim();
+        return (data.output || [])
+          .flatMap(item => item && item.type === 'message' ? (item.content || []) : [])
+          .filter(item => item && item.type === 'output_text' && typeof item.text === 'string')
+          .map(item => item.text)
+          .join('\n')
+          .trim();
+      }
+
+      function setListening(active) {
+        isListening = active;
+        els.micButton.classList.toggle('listening', active);
+        els.micButton.setAttribute('aria-pressed', String(active));
+        els.micLabel.textContent = active ? 'Stop & match' : 'Start reciting';
+      }
+
+      function setupSpeechRecognition() {
+        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Recognition) {
+          els.micButton.disabled = true;
+          els.speechStatus.textContent = 'Speech recognition is not available in this browser. You can still type your recall.';
+          return;
+        }
+
+        speechRecognition = new Recognition();
+        speechRecognition.continuous = true;
+        speechRecognition.interimResults = true;
+        speechRecognition.lang = navigator.language || 'en-US';
+
+        speechRecognition.onstart = () => {
+          setListening(true);
+          els.speechStatus.textContent = 'Listening… recite the current chunk, then press Stop & match.';
+        };
+        speechRecognition.onresult = event => {
+          let interim = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const words = event.results[i][0].transcript.trim();
+            if (event.results[i].isFinal) finalTranscript += `${words} `;
+            else interim += `${words} `;
+          }
+          els.recall.value = `${finalTranscript}${interim}`.trim();
+        };
+        speechRecognition.onerror = event => {
+          scoreSpeechOnEnd = false;
+          const messages = {
+            'not-allowed': 'Microphone access was not allowed. Enable it for this site or type your recall.',
+            'audio-capture': 'No microphone was found. Connect one or type your recall.',
+            'no-speech': 'No speech was detected. Press the microphone and try again.',
+            'network': 'Speech recognition could not reach the browser speech service.'
+          };
+          els.speechStatus.textContent = messages[event.error] || 'Speech recognition stopped unexpectedly. Please try again.';
+        };
+        speechRecognition.onend = () => {
+          setListening(false);
+          if (scoreSpeechOnEnd && els.recall.value.trim()) {
+            checkRecall();
+            els.speechStatus.textContent = 'Recitation matched against the current chunk. Review the result below.';
+          }
+          scoreSpeechOnEnd = false;
+        };
+      }
+
+      function toggleSpeechRecognition() {
+        if (!speechRecognition) return;
+        if (isListening) {
+          els.speechStatus.textContent = 'Finishing your transcript…';
+          speechRecognition.stop();
+          return;
+        }
+        finalTranscript = '';
+        els.recall.value = '';
+        els.score.textContent = '';
+        els.feedback.classList.remove('visible');
+        els.accuracy.textContent = 'Not tested';
+        scoreSpeechOnEnd = true;
+        try { speechRecognition.start(); }
+        catch {
+          scoreSpeechOnEnd = false;
+          els.speechStatus.textContent = 'The microphone is already starting. Please try again in a moment.';
+        }
+      }
+
+      async function explainPassage() {
+        const apiKey = els.apiKey.value.trim();
+        const passage = els.source.value.trim();
+        if (!apiKey || apiKey.length < 20) {
+          setAIStatus('Add a valid OpenAI API key in Settings first.', true);
+          if (els.aiDialog.open) els.aiDialog.close();
+          els.settingsDialog.showModal();
+          els.apiKey.focus();
+          return;
+        }
+        if (!passage) {
+          setAIStatus('Add a passage before asking for an explanation.', true);
+          return;
+        }
+        if (passage.length > 12000) {
+          setAIStatus('This prototype supports passages up to 12,000 characters for AI explanation.', true);
+          return;
+        }
+
+        els.explainButton.disabled = true;
+        els.explainButton.textContent = 'Explaining…';
+        els.aiResult.hidden = true;
+        setAIStatus('Reading for meaning…');
+
+        try {
+          const response = await fetch('/api/explain', {
+            method: 'POST',
+            cache: 'no-store',
+            credentials: 'same-origin',
+            referrerPolicy: 'no-referrer',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ passage })
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            const message = data && data.error && data.error.message
+              ? data.error.message
+              : `OpenAI returned ${response.status}.`;
+            throw new Error(message);
+          }
+
+          const explanation = extractResponseText(data);
+          if (!explanation) throw new Error('OpenAI returned no explanation. Please try again.');
+          els.aiOutput.textContent = explanation;
+          els.aiResult.hidden = false;
+          lastExplainedSource = passage;
+          setAIStatus('Explanation ready. Make sure it matches your understanding of the passage.');
+        } catch (error) {
+          const message = error instanceof TypeError
+            ? 'Could not reach OpenAI from this browser. Check your connection and try again.'
+            : error.message;
+          setAIStatus(message || 'The explanation could not be generated.', true);
+        } finally {
+          els.explainButton.disabled = false;
+          els.explainButton.textContent = 'Explain passage';
+        }
+      }
+
+      function cueFor(token, wordIndex) {
+        if (revealed.has(wordIndex) || mode === 'full') return token;
+        if (mode === 'fade') return wordIndex % 2 === 0 ? token : firstCharacter(token);
+        if (mode === 'letters') return firstCharacter(token);
+        return '';
+      }
+
+      function updateChunkControls() {
+        const label = `${currentChunk + 1} of ${chunks.length}`;
+        els.chunkStat.textContent = label;
+        els.chunkIndicator.textContent = `Part ${label}`;
+        els.previous.disabled = currentChunk === 0;
+        els.next.disabled = currentChunk === chunks.length - 1;
+        const dots = document.querySelector('#chunkDots');
+        dots.replaceChildren();
+        if (chunks.length <= 20) chunks.forEach((_, index) => {
+          const dot = document.createElement('span');
+          dot.className = index === currentChunk ? 'current' : checkedParts.has(index) ? 'checked' : '';
+          dots.append(dot);
+        });
+        updateAdvance();
+        document.querySelector('#testContext').textContent = `Part ${currentChunk + 1} of ${chunks.length} · ${normalizeWords(chunks[currentChunk] || '').length} words · ${els.displayTitle.textContent}`;
+        document.querySelector('#continueRecall').textContent = currentChunk < chunks.length - 1 ? 'Next part →' : queue.indexOf(activeId) < queue.length - 1 ? 'Next passage →' : 'Back to passages →';
+      }
+
+      function render() {
+        els.cue.replaceChildren();
+        let wordIndex = 0;
+        tokens.forEach(token => {
+          if (!isWord(token)) {
+            els.cue.append(document.createTextNode(token));
+            return;
+          }
+
+          const currentIndex = wordIndex++;
+          if (mode === 'cold' && !revealed.has(currentIndex)) {
+            const blank = document.createElement('button');
+            blank.type = 'button';
+            blank.className = 'word cold-space';
+            blank.setAttribute('aria-label', `Reveal word ${currentIndex + 1}`);
+            blank.addEventListener('click', () => { revealed.add(currentIndex); render(); });
+            els.cue.append(blank);
+            return;
+          }
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'word' + (revealed.has(currentIndex) ? ' revealed' : '');
+          button.textContent = cueFor(token, currentIndex);
+          if (mode === 'full') {
+            const word = document.createElement('span');
+            word.textContent = token;
+            els.cue.append(word);
+            return;
+          }
+          button.title = revealed.has(currentIndex) ? 'Hide this word' : 'Reveal this word';
+          button.setAttribute('aria-label', revealed.has(currentIndex) ? `${token}, revealed` : `Reveal word ${currentIndex + 1}`);
+          button.addEventListener('click', () => {
+            if (revealed.has(currentIndex)) revealed.delete(currentIndex);
+            else revealed.add(currentIndex);
+            render();
+          });
+          els.cue.append(button);
+        });
+        els.revealed.textContent = revealed.size;
+        updateChunkControls();
+      }
+
+      function resetAttempt() {
+        if (isListening && speechRecognition) {
+          scoreSpeechOnEnd = false;
+          speechRecognition.stop();
+        }
+        finalTranscript = '';
+        els.recall.value = '';
+        els.score.textContent = '';
+        els.feedback.classList.remove('visible');
+        els.accuracy.textContent = '—';
+        testHintsUsed = false;
+        document.querySelector('#hideTestCues').checked = false;
+        document.body.classList.remove('test-cues-hidden');
+      }
+
+      function setChunk(index) {
+        currentChunk = Math.max(0, Math.min(chunks.length - 1, index));
+        tokens = tokenize(chunks[currentChunk] || '');
+        revealed.clear();
+        resetAttempt();
+        render();
+        persistProgress();
+      }
+
+      function setMode(nextMode) {
+        mode = nextMode;
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+          tab.setAttribute('aria-selected', String(tab.dataset.mode === mode));
+          tab.tabIndex = tab.dataset.mode === mode ? 0 : -1;
+        });
+        const details = stages[mode];
+        els.stageTitle.textContent = details[0];
+        els.stageHelp.textContent = details[1];
+        els.stageCount.textContent = details[2];
+        els.cueHint.textContent = details[3];
+        document.querySelector('#revealChunk').hidden = mode === 'full';
+        document.querySelector('#resetReveals').hidden = mode === 'full';
+        revealed.clear();
+        resetAttempt();
+        render();
+        persistProgress();
+      }
+
+      function generate({ notify = true, activate = true } = {}) {
+        const source = els.source.value.trim();
+        if (!source) {
+          showToast('Add a passage first');
+          els.source.focus();
+          return;
+        }
+        chunks = splitIntoChunks(source);
+        if (lastExplainedSource && lastExplainedSource !== source) {
+          lastExplainedSource = '';
+          els.aiOutput.textContent = '';
+          els.aiResult.hidden = true;
+          setAIStatus('Passage changed. Generate a new explanation when ready.');
+        }
+        els.displayTitle.textContent = els.title.value.trim() || 'Untitled passage';
+        savePassage();
+        const saved = library.find(item => item.id === activeId);
+        const resumePart = saved?.part || 0;
+        const resumeStage = saved?.stage || 'full';
+        checkedParts.clear();
+        (saved?.checked || []).forEach(index => checkedParts.add(index));
+        loadingPassage = true;
+        setChunk(resumePart);
+        setMode(resumeStage);
+        loadingPassage = false;
+        persistProgress();
+        renderQueue();
+        if (activate) document.body.classList.add('session-active');
+        if (activate) document.querySelector('.practice-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (notify) showToast(`${chunks.length} practice ${chunks.length === 1 ? 'part' : 'parts'} ready`);
+      }
+
+      function sequenceDiff(expected, actual) {
+        const rows = expected.length + 1;
+        const cols = actual.length + 1;
+        const table = Array.from({ length: rows }, () => Array(cols).fill(0));
+        for (let i = expected.length - 1; i >= 0; i--) {
+          for (let j = actual.length - 1; j >= 0; j--) {
+            table[i][j] = expected[i] === actual[j]
+              ? table[i + 1][j + 1] + 1
+              : Math.max(table[i + 1][j], table[i][j + 1]);
+          }
+        }
+
+        const operations = [];
+        let i = 0;
+        let j = 0;
+        while (i < expected.length || j < actual.length) {
+          if (i < expected.length && j < actual.length && expected[i] === actual[j]) {
+            operations.push({ type: 'correct', word: actual[j] });
+            i++; j++;
+          } else if (i < expected.length && (j >= actual.length || table[i + 1][j] >= table[i][j + 1])) {
+            operations.push({ type: 'missing', word: expected[i] });
+            i++;
+          } else {
+            operations.push({ type: 'wrong', word: actual[j] });
+            j++;
+          }
+        }
+        return operations;
+      }
+
+      function checkRecall() {
+        const expected = normalizeWords(chunks[currentChunk] || '');
+        const actual = normalizeWords(els.recall.value);
+        if (actual.length > 1200) { showToast('Check just the current part (up to 1,200 words per attempt).'); return; }
+        if (!actual.length) {
+          showToast('Type what you remember first');
+          els.recall.focus();
+          return;
+        }
+
+        const operations = sequenceDiff(expected, actual);
+        const correct = operations.filter(item => item.type === 'correct').length;
+        els.feedbackWords.replaceChildren();
+        operations.forEach(item => {
+          const chip = document.createElement('span');
+          chip.className = item.type;
+          chip.textContent = item.type === 'missing' ? `+ ${item.word}` : item.word;
+          chip.title = item.type === 'missing' ? 'Missing from your answer' : item.type === 'wrong' ? 'Extra or different word' : 'Correct';
+          els.feedbackWords.append(chip);
+        });
+
+        const extras = operations.filter(item => item.type === 'wrong').length;
+        const exact = correct === expected.length && extras === 0;
+        const rawPercent = expected.length ? Math.round((correct / (expected.length + extras)) * 100) : 0;
+        const percent = exact ? 100 : Math.min(99, rawPercent);
+        els.score.textContent = `${percent}% exact`;
+        els.accuracy.textContent = `${percent}%`;
+        els.feedbackSummary.textContent = exact
+          ? (mode === 'cold' ? 'Every word, in order. Well remembered.' : 'Every word matches. Ready to try with fewer cues?')
+          : `${correct} of ${expected.length} words in order${extras ? ` · ${extras} extra or different` : ''}. Review the marked words and try again.`;
+        if (exact && !testHintsUsed && !revealed.size && (mode === 'cold' || document.querySelector('#hideTestCues').checked)) checkedParts.add(currentChunk);
+        document.querySelector('#correctCount').textContent = correct;
+        document.querySelector('#missingCount').textContent = expected.length - correct;
+        document.querySelector('#extraCount').textContent = extras;
+        persistProgress();
+        updateChunkControls();
+        els.feedback.classList.add('visible');
+      }
+
+      document.querySelector('#generateBtn').addEventListener('click', () => generate());
+      document.querySelector('#openLibrary').addEventListener('click', openLibrary);
+      document.querySelector('#libraryInvite').addEventListener('click', openLibrary);
+      document.querySelector('#selectAllPassages').addEventListener('click', () => {
+        selectedPassages = selectedPassages.size === library.length ? new Set() : new Set(library.map(item => item.id));
+        renderLibrary();
+      });
+      document.querySelector('#importText').addEventListener('input', previewImport);
+      document.querySelector('#importSplit').addEventListener('change', previewImport);
+      document.querySelector('#saveImport').addEventListener('click', () => {
+        const items = parseImport();
+        const previousLength = library.length;
+        let skipped = 0;
+        items.forEach(item => {
+          if (library.some(saved => saved.source === item.source)) { skipped++; return; }
+          const entry = makePassage(item.title, item.source);
+          library.push(entry);
+          selectedPassages.add(entry.id);
+        });
+        if (!persistLibrary()) {
+          library.splice(previousLength).forEach(item => selectedPassages.delete(item.id));
+          document.querySelector('#importStatus').textContent = 'Could not save. Your pasted text is still here; copy it before leaving.';
+          return;
+        }
+        renderLibrary();
+        document.querySelector('#importText').value = '';
+        previewImport();
+        document.querySelector('#importStatus').textContent = `${library.length - previousLength} saved${skipped ? ` · ${skipped} duplicates skipped` : ''}. Select passages above to begin.`;
+      });
+      document.querySelector('#practiceSelected').addEventListener('click', () => {
+        if (!selectedPassages.size) return;
+        queue = library.filter(item => selectedPassages.has(item.id)).map(item => item.id);
+        libraryDialog.close();
+        loadPassage(queue[0]);
+      });
+      document.querySelector('#queueSelect').addEventListener('change', event => loadPassage(event.target.value));
+      document.querySelector('#nextPassage').addEventListener('click', () => {
+        const next = queue[queue.indexOf(activeId) + 1];
+        if (next) loadPassage(next);
+      });
+      function chooseAnswerMethod(speak) {
+        document.querySelector('#typeAnswer').setAttribute('aria-pressed', String(!speak));
+        document.querySelector('#speakAnswer').setAttribute('aria-pressed', String(speak));
+        document.querySelector('#speechPanel').hidden = !speak;
+        if (!speak && isListening) { scoreSpeechOnEnd = false; speechRecognition.stop(); }
+        els.recall.placeholder = speak ? 'Your transcript will appear here. You can edit it before checking.' : 'What comes next? Type the words you remember…';
+        if (!speak) els.recall.focus();
+      }
+      document.querySelector('#typeAnswer').addEventListener('click', () => chooseAnswerMethod(false));
+      document.querySelector('#speakAnswer').addEventListener('click', () => chooseAnswerMethod(true));
+      document.querySelector('#hideTestCues').addEventListener('change', event => {
+        document.body.classList.toggle('test-cues-hidden', event.target.checked);
+        if (!event.target.checked) testHintsUsed = true;
+      });
+      document.querySelector('#retryRecall').addEventListener('click', () => { resetAttempt(); els.recall.focus(); });
+      document.querySelector('#continueRecall').addEventListener('click', continuePractice);
+      els.micButton.addEventListener('click', toggleSpeechRecognition);
+      document.querySelector('#openSettings').addEventListener('click', () => {
+        els.settingsDialog.showModal();
+        requestAnimationFrame(() => els.apiKey.focus());
+      });
+      els.openAI.addEventListener('click', () => {
+        if (!hasValidAPIKey()) {
+          els.settingsDialog.showModal();
+          requestAnimationFrame(() => els.apiKey.focus());
+          return;
+        }
+        els.aiDialog.showModal();
+      });
+      document.querySelectorAll('[data-close-dialog]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
+      document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => {
+        if (event.target === dialog) dialog.close();
+      }));
+      document.querySelector('#toggleKey').addEventListener('click', event => {
+        const show = els.apiKey.type === 'password';
+        els.apiKey.type = show ? 'text' : 'password';
+        event.currentTarget.textContent = show ? 'Hide' : 'Show';
+        event.currentTarget.setAttribute('aria-pressed', String(show));
+      });
+      els.explainButton.addEventListener('click', explainPassage);
+      els.apiKey.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          updateAIAvailability({ announce: true });
+        }
+      });
+      els.apiKey.addEventListener('input', () => updateAIAvailability({ announce: true }));
+      document.querySelector('#clearExplanation').addEventListener('click', () => {
+        els.aiOutput.textContent = '';
+        els.aiResult.hidden = true;
+        setAIStatus('Explanation cleared. Your API key remains only in this tab.');
+      });
+      document.querySelector('#forgetKey').addEventListener('click', () => {
+        els.apiKey.value = '';
+        els.apiKey.type = 'password';
+        document.querySelector('#toggleKey').textContent = 'Show';
+        document.querySelector('#toggleKey').setAttribute('aria-pressed', 'false');
+        updateAIAvailability();
+        els.keyStatus.textContent = 'API key removed from this tab.';
+        els.keyStatus.classList.remove('error');
+      });
+      document.querySelector('#editPassage').addEventListener('click', () => {
+        document.body.classList.remove('session-active', 'focus-mode');
+        els.focusButton.textContent = 'Focus mode';
+        document.querySelector('.setup-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        els.title.focus();
+      });
+      els.focusButton.addEventListener('click', () => {
+        const active = document.body.classList.toggle('focus-mode');
+        els.focusButton.textContent = active ? 'Exit focus' : 'Focus mode';
+      });
+      document.querySelector('#exitFocus').addEventListener('click', () => {
+        document.body.classList.remove('focus-mode');
+        els.focusButton.textContent = 'Focus mode';
+        els.focusButton.focus();
+      });
+      advanceButton.addEventListener('click', () => {
+        const index = stageOrder.indexOf(mode);
+        if (index < 3) setMode(stageOrder[index + 1]);
+        else {
+          continuePractice();
+        }
+      });
+      document.querySelectorAll('.mode-tab').forEach(tab => {
+        tab.addEventListener('click', () => setMode(tab.dataset.mode));
+        tab.addEventListener('keydown', event => {
+          const index = stageOrder.indexOf(mode);
+          const next = event.key === 'ArrowRight' ? (index + 1) % 4 : event.key === 'ArrowLeft' ? (index + 3) % 4 : event.key === 'Home' ? 0 : event.key === 'End' ? 3 : -1;
+          if (next < 0) return;
+          event.preventDefault();
+          setMode(stageOrder[next]);
+          document.querySelector(`[data-mode="${mode}"]`).focus();
+        });
+      });
+      document.querySelector('#revealChunk').addEventListener('click', () => {
+        revealed = new Set(tokens.filter(isWord).map((_, index) => index));
+        render();
+      });
+      document.querySelector('#resetReveals').addEventListener('click', () => {
+        revealed.clear();
+        render();
+      });
+      els.previous.addEventListener('click', () => setChunk(currentChunk - 1));
+      els.next.addEventListener('click', () => setChunk(currentChunk + 1));
+      document.querySelector('#checkBtn').addEventListener('click', checkRecall);
+      document.querySelector('#clearBtn').addEventListener('click', () => {
+        resetAttempt();
+        els.speechStatus.textContent = 'Speak the current chunk and watch your words appear below.';
+        els.recall.focus();
+      });
+      [els.title, els.source].forEach(input => input.addEventListener('input', () => {
+        updateEditor();
+        clearTimeout(saveTimer);
+        document.querySelector('#savedStatus').textContent = 'Saving…';
+        saveTimer = setTimeout(savePassage, 400);
+      }));
+      els.recall.addEventListener('input', () => {
+        els.score.textContent = '';
+        els.accuracy.textContent = '—';
+        els.feedback.classList.remove('visible');
+      });
+      els.recall.addEventListener('keydown', event => {
+        if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') checkRecall();
+      });
+
+      [els.title, els.source].forEach(input => input.addEventListener('keydown', event => {
+        if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') generate();
+      }));
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && document.body.classList.contains('focus-mode')) {
+          document.body.classList.remove('focus-mode');
+          els.focusButton.textContent = 'Focus mode';
+        }
+      });
+
+      try {
+        const savedLibrary = JSON.parse(localStorage.getItem('flow-library-v1'));
+        if (savedLibrary && Array.isArray(savedLibrary.entries)) {
+          library = savedLibrary.entries.filter(item => item && typeof item.id === 'string' && typeof item.source === 'string' && typeof item.title === 'string');
+          activeId = library.some(item => item.id === savedLibrary.activeId) ? savedLibrary.activeId : library[0]?.id;
+          queue = Array.isArray(savedLibrary.queue) ? savedLibrary.queue.filter(id => library.some(item => item.id === id)) : [];
+        }
+      } catch (_) {}
+      try {
+        const saved = JSON.parse(localStorage.getItem('flow-passage'));
+        if (saved && saved.source) {
+          els.title.value = saved.title || 'Untitled passage';
+          els.source.value = saved.source;
+        }
+      } catch (_) {}
+
+      if (!library.length) {
+        const item = makePassage(els.title.value.trim() || 'Untitled passage', els.source.value.trim());
+        library.push(item);
+        activeId = item.id;
+      }
+      if (!queue.includes(activeId)) queue = [activeId];
+      loadPassage(activeId, false);
+      updateEditor();
+      setupSpeechRecognition();
+      updateAIAvailability();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "flow-first-letter-practice",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-worker.mjs",
+    "validate": "node scripts/validate-worker.mjs"
+  }
+}
